@@ -408,6 +408,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   @override
   Widget build(BuildContext context) {
+    final showPreviousAtBottom =
+        widget.chapterIndex > 0 && (_loading || _type == 'pdf' || _singlePage);
+    final showNextAtBottom =
+        _nextChapter != null && (_loading || _type == 'pdf' || _singlePage);
     Widget body;
     if (_loading) {
       body = const Center(child: CircularProgressIndicator());
@@ -423,22 +427,6 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          if (widget.chapterIndex > 0 &&
-              (_loading || _type == 'pdf' || _singlePage))
-            TextButton.icon(
-              onPressed: _openPreviousChapter,
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('ตอนก่อนหน้า'),
-            ),
-          if (_nextChapter != null &&
-              _pageCount > 0 &&
-              _currentPage == _pageCount &&
-              (_type == 'pdf' || _singlePage))
-            TextButton.icon(
-              onPressed: _openNextChapter,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('ตอนถัดไป'),
-            ),
           IconButton(
             tooltip: 'ความคิดเห็นของตอน',
             onPressed: () => Navigator.push(
@@ -462,6 +450,44 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         ],
       ),
       body: body,
+      bottomNavigationBar: showPreviousAtBottom || showNextAtBottom
+          ? SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    if (showPreviousAtBottom)
+                      OutlinedButton.icon(
+                        onPressed: _openPreviousChapter,
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('ตอนก่อนหน้า'),
+                      ),
+                    if (showNextAtBottom)
+                      FilledButton.icon(
+                        onPressed: _openNextChapter,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text('ตอนถัดไป'),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

@@ -61,25 +61,41 @@ class _ChapterDialogState extends State<ChapterDialog> {
       allowMultiple: type == 'images',
       withData: false,
     );
-    if (picked == null || !mounted) return;
-    final files = picked.files.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    if (picked == null || picked.files.isEmpty || !mounted) return;
+    final files = [
+      if (type == 'images' && _contentType == 'images') ..._files,
+      ...picked.files,
+    ]..sort((a, b) => a.name.compareTo(b.name));
     final maxFileSize = (type == 'pdf' ? 20 : 5) * 1024 * 1024;
     final totalSize = files.fold<int>(0, (total, file) => total + file.size);
+    final names = files.map((file) => file.name.toLowerCase()).toSet();
+    final error = files.any((file) => file.path == null)
+        ? 'อ่านไฟล์ที่เลือกไม่ได้'
+        : files.length > (type == 'pdf' ? 1 : 15)
+        ? 'เลือกภาพได้สูงสุด 15 ไฟล์ต่อตอน'
+        : names.length != files.length
+        ? 'มีชื่อไฟล์ซ้ำ กรุณาเลือกภาพชื่ออื่น'
+        : files.any((file) => file.size > maxFileSize)
+        ? type == 'pdf'
+              ? 'PDF ต้องไม่เกิน 20 MB'
+              : 'ภาพแต่ละไฟล์ต้องไม่เกิน 5 MB'
+        : totalSize > 30 * 1024 * 1024
+        ? 'ขนาดไฟล์รวมต้องไม่เกิน 30 MB'
+        : null;
     setState(() {
-      _contentType = type;
-      _files = files;
-      _fileError = files.any((file) => file.path == null)
-          ? 'อ่านไฟล์ที่เลือกไม่ได้'
-          : files.length > (type == 'pdf' ? 1 : 15)
-          ? 'เลือกภาพได้สูงสุด 15 ไฟล์'
-          : files.any((file) => file.size > maxFileSize)
-          ? type == 'pdf'
-                ? 'PDF ต้องไม่เกิน 20 MB'
-                : 'ภาพแต่ละไฟล์ต้องไม่เกิน 5 MB'
-          : totalSize > 30 * 1024 * 1024
-          ? 'ขนาดไฟล์รวมต้องไม่เกิน 30 MB'
-          : null;
+      _fileError = error;
+      if (error == null) {
+        _contentType = type;
+        _files = files;
+      }
+    });
+  }
+
+  void _removeFile(int index) {
+    setState(() {
+      _files.removeAt(index);
+      if (_files.isEmpty) _contentType = null;
+      _fileError = null;
     });
   }
 
@@ -90,7 +106,6 @@ class _ChapterDialogState extends State<ChapterDialog> {
       return;
     }
     if (_files.any((file) => file.path == null)) return;
-    if (_fileError != null) return;
     Navigator.pop(
       context,
       ChapterFormResult(
@@ -265,7 +280,7 @@ class _ChapterDialogState extends State<ChapterDialog> {
                       Text('PDF 1 ไฟล์ ไม่เกิน 20 MB', style: helperStyle),
                       const SizedBox(height: 4),
                       Text(
-                        'หรือภาพ JPG, PNG, WebP สูงสุด 15 ไฟล์ (ไม่เกิน 5 MB ต่อภาพ และรวมไม่เกิน 30 MB)',
+                        'หรือภาพ JPG, PNG, WebP สูงสุด 15 ไฟล์ต่อตอน เลือกเพิ่มได้หลายรอบ (ไม่เกิน 5 MB ต่อภาพ และรวมไม่เกิน 30 MB)',
                         style: helperStyle,
                       ),
                       const SizedBox(height: 4),
@@ -287,9 +302,15 @@ class _ChapterDialogState extends State<ChapterDialog> {
                       label: const Text('เลือก PDF'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => _pickFiles('images'),
+                      onPressed: _contentType == 'images' && _files.length >= 15
+                          ? null
+                          : () => _pickFiles('images'),
                       icon: const Icon(Icons.collections_outlined, size: 20),
-                      label: const Text('เลือกภาพ'),
+                      label: Text(
+                        _contentType == 'images' && _files.isNotEmpty
+                            ? 'เพิ่มภาพ (${_files.length}/15)'
+                            : 'เลือกภาพ',
+                      ),
                     ),
                   ],
                 ),
@@ -302,13 +323,39 @@ class _ChapterDialogState extends State<ChapterDialog> {
                       color: colors.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Text(
-                      '${_files.length} ไฟล์: ${_files.map((file) => file.name).join(', ')}',
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _contentType == 'images'
+                              ? 'ภาพที่เลือก ${_files.length}/15 ไฟล์'
+                              : 'PDF ที่เลือก',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (var index = 0; index < _files.length; index++)
+                              InputChip(
+                                label: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 230,
+                                  ),
+                                  child: Text(
+                                    _files[index].name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                onDeleted: () => _removeFile(index),
+                                deleteButtonTooltipMessage: 'ลบภาพที่เลือก',
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],

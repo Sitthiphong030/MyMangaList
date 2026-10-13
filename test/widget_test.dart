@@ -241,24 +241,33 @@ void main() {
     expect(find.text('รีพอร์ต'), findsOneWidget);
   });
 
-  testWidgets('Reader shows previous chapter when available', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MangaReaderPage(
-          mangaId: 1,
-          chapterId: 2,
-          title: 'ตอนที่ 2',
-          accessToken: 'test-token',
-          chapters: [
-            {'chapter_id': 1, 'chapter_number': 1},
-            {'chapter_id': 2, 'chapter_number': 2},
-          ],
-          chapterIndex: 1,
+  for (final index in [0, 1, 2]) {
+    testWidgets('Reader shows adjacent chapters from chapter ${index + 1}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MangaReaderPage(
+            mangaId: 1,
+            chapterId: index + 1,
+            title: 'ตอนที่ ${index + 1}',
+            accessToken: 'test-token',
+            chapters: const [
+              {'chapter_id': 1, 'chapter_number': 1},
+              {'chapter_id': 2, 'chapter_number': 2},
+              {'chapter_id': 3, 'chapter_number': 3},
+            ],
+            chapterIndex: index,
+          ),
         ),
-      ),
-    );
-    expect(find.text('ตอนก่อนหน้า'), findsOneWidget);
-  });
+      );
+      expect(
+        find.text('ตอนก่อนหน้า'),
+        index > 0 ? findsOneWidget : findsNothing,
+      );
+      expect(find.text('ตอนถัดไป'), index < 2 ? findsOneWidget : findsNothing);
+    });
+  }
 
   testWidgets('Search genres include categories without uploaded Manga', (
     tester,
