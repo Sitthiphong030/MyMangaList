@@ -94,7 +94,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _manga = items
             .map((item) => Map<String, dynamic>.from(item as Map))
             .toList();
-        _topManga = top.take(10).toList();
+        _topManga = top.take(5).toList();
       });
     } catch (error) {
       if (!mounted) return;
@@ -345,7 +345,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
               if (_showPublic && _topManga.isNotEmpty) ...[
                 Text(
-                  'Top 10 ยอดผู้อ่าน',
+                  'Top 5 ยอดผู้อ่าน',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
