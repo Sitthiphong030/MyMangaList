@@ -210,7 +210,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final name = _actionName(action);
     if (!await _confirm(
       name,
-      'รีพอร์ตเรื่อง “${report['manga_title']}” จะถูกปิดด้วยผล: $name',
+      action == 'user_suspended'
+          ? 'รีพอร์ตเรื่อง “${report['manga_title']}” จะถูกปิดด้วยผล: $name และสถานะเรื่องจะเปลี่ยนเป็น Hiatus'
+          : 'รีพอร์ตเรื่อง “${report['manga_title']}” จะถูกปิดด้วยผล: $name',
     )) {
       return;
     }
@@ -462,7 +464,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       child: const Text('ลบเรื่อง'),
                                     ),
                                   ],
-                                  if (report['uploader_user_id'] != null)
+                                  if (report['uploader_user_id'] != null &&
+                                      report['manga_id'] != null)
                                     OutlinedButton(
                                       onPressed: _busy
                                           ? null

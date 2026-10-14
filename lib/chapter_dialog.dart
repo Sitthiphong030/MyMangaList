@@ -215,8 +215,8 @@ class _ChapterDialogState extends State<ChapterDialog> {
                   ),
                   validator: (value) {
                     final number = int.tryParse(value?.trim() ?? '');
-                    return number == null || number < 1
-                        ? 'กรุณากรอกเลขตอนตั้งแต่ 1'
+                    return number == null || number.isNegative
+                        ? 'กรุณากรอกเลขตอนตั้งแต่ 0'
                         : null;
                   },
                 ),
@@ -280,7 +280,7 @@ class _ChapterDialogState extends State<ChapterDialog> {
                       Text('PDF 1 ไฟล์ ไม่เกิน 20 MB', style: helperStyle),
                       const SizedBox(height: 4),
                       Text(
-                        'หรือภาพ JPG, PNG, WebP สูงสุด 15 ไฟล์ต่อตอน เลือกเพิ่มได้หลายรอบ (ไม่เกิน 5 MB ต่อภาพ และรวมไม่เกิน 30 MB)',
+                        'หรือภาพ JPG, PNG, PDF สูงสุด 15 ไฟล์ต่อตอน เลือกเพิ่มได้หลายรอบ (ไม่เกิน 5 MB ต่อภาพ และรวมไม่เกิน 30 MB)',
                         style: helperStyle,
                       ),
                       const SizedBox(height: 4),
